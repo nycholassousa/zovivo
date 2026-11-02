@@ -67,7 +67,7 @@ jobs:
           mv release-manifest.json zoia-addon.json
           node scripts/check-manifest.js --strict
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: zoia-addon.json
           generate_release_notes: true
