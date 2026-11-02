@@ -1,6 +1,6 @@
 # Zovivo's image. It has no dependencies at run time and writes nothing, so
 # Zoia's read-only root is no trouble: Node and the source are all it needs.
-FROM node:22-alpine
+FROM node:26-alpine
 
 WORKDIR /addon
 COPY package.json ./
