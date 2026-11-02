@@ -1,0 +1,48 @@
+{
+  "id": "zovivo",
+  "name": "Zovivo",
+  "version": "0.0.0",
+  "description": "Says in its chats who is live on Twitch, and deletes the message when they stop.",
+  "image": "ghcr.io/nycholassousa/zovivo@sha256:FILLED_IN_BY_THE_RELEASE_WORKFLOW",
+  "permissions": ["chat.write", "bots.create"],
+  "settings": [
+    {
+      "key": "streamers",
+      "type": "string",
+      "label": "Streamers",
+      "description": "Twitch names or links, separated by spaces or commas. Up to 2000 characters."
+    },
+    {
+      "key": "twitchClientId",
+      "type": "string",
+      "label": "Twitch client ID",
+      "description": "From an application at dev.twitch.tv/console."
+    },
+    {
+      "key": "twitchClientSecret",
+      "type": "secret",
+      "label": "Twitch client secret"
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": "Language",
+      "description": "What Zovivo writes in the chat in.",
+      "options": [
+        {
+          "value": "pt",
+          "label": "Português"
+        },
+        {
+          "value": "en",
+          "label": "English"
+        },
+        {
+          "value": "es",
+          "label": "Español"
+        }
+      ],
+      "default": "pt"
+    }
+  ]
+}

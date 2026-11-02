@@ -1,0 +1,73 @@
+# On a v* tag: runs the checks, builds and pushes the image, writes its digest
+# and the version into zoia-addon.json, and publishes a release with it
+# attached. Zoia installs from the latest release. See AGENTS.md, and
+# docs/addons/publishing.md in Zoia.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      # Before anything is built: a tag is not to be taken back (AGENTS.md).
+      - name: The tag matches package.json
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          expected="$(node -p "require('./package.json').version")"
+          if [ "${VERSION#v}" != "$expected" ]; then
+            echo "The tag is $VERSION, and package.json says $expected" >&2
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.ref_name }}
+            ${{ steps.image.outputs.name }}:latest
+
+      # By digest, never by tag: Zoia runs exactly this build.
+      - name: Write the manifest
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          jq --arg image "$IMAGE" --arg version "${VERSION#v}" \
+            '.image = $image | .version = $version' zoia-addon.json > release-manifest.json
+          mv release-manifest.json zoia-addon.json
+          node scripts/check-manifest.js --strict
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: zoia-addon.json
+          generate_release_notes: true

@@ -1,0 +1,36 @@
+# Zovivo's real process against Zoia's real app, at the head of Zoia's main.
+# Weekly as well: Zoia changes in its own repository, and nothing here would
+# otherwise run to notice that the API moved.
+name: Zoia contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: caiomcg/zoia
+          ref: main
+          path: zoia
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install Zoia, without its hooks
+        run: npm ci --ignore-scripts
+        working-directory: zoia
+      - run: npm run test:zoia
+        env:
+          ZOIA_PATH: zoia
